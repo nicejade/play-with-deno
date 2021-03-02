@@ -5,12 +5,13 @@
  */
 import * as path from 'https://deno.land/std/path/mod.ts'
 const deepLoopTraversal = async (directory: string, filePathArr: any[]) => {
+  const promiseList: Promise<any>[] = []
   for await (const dirEntry of Deno.readDir(directory)) {
     const filename = dirEntry.name
     const filePath = path.join(directory, filename)
     const stats = Deno.statSync(filePath)
     if (stats.isDirectory) {
-      await deepLoopTraversal(filePath, filePathArr)
+      promiseList.push(deepLoopTraversal(filePath, filePathArr))
     } else {
       const isFile = stats.isFile
       const extname = isFile ? path.extname(filePath) : ''
@@ -18,6 +19,9 @@ const deepLoopTraversal = async (directory: string, filePathArr: any[]) => {
         filePathArr.push(filePath)
       }
     }
+  }
+  if (promiseList.length) {
+    await Promise.all(promiseList)
   }
 }
 
